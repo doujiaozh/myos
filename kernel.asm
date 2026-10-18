@@ -9,6 +9,9 @@ start:
   loop clr
   mov esi, msg_boot
   call print_str
+  mov al, 10
+  call print_char
+  call print_prompt
   ; Í  PIC
   mov al, 0x11
   out 0x20, al
@@ -78,8 +81,7 @@ keyboard_handler:
   call print_char
   call check_command
   mov dword [cmd_len], 0
-  mov esi, prompt
-  call print_str
+  call print_prompt
   jmp .done
 .done:
   mov al, 0x20
@@ -87,17 +89,43 @@ keyboard_handler:
   popa
   iret
 
+print_prompt:
+  mov esi, prompt
+  call print_str
+  ret
+
 check_command:
   mov ecx, [cmd_len]
   mov byte [cmd_buf + ecx], 0
-  cmp byte [cmd_buf], 97
-  jne .check_llm
+  cmp dword [cmd_len], 0
+  je .ret
+  ; clear
+  cmp byte [cmd_buf], 99
+  jne .chk_time
+  call cmd_clear
+  jmp .ret
+.chk_time:
+  ; time
+  cmp byte [cmd_buf], 116
+  jne .chk_help
   cmp byte [cmd_buf+1], 105
-  jne .check_llm
-  mov esi, msg_ai
-  call print_str
-  ret
-.check_llm:
+  jne .chk_help
+  call cmd_time
+  jmp .ret
+.chk_help:
+  ; help
+  cmp byte [cmd_buf], 104
+  jne .chk_reboot
+  call cmd_help
+  jmp .ret
+.chk_reboot:
+  ; reboot
+  cmp byte [cmd_buf], 114
+  jne .chk_llm
+  call cmd_reboot
+  jmp .ret
+.chk_llm:
+  ; llm
   cmp byte [cmd_buf], 108
   jne .not_found
   cmp byte [cmd_buf+1], 108
@@ -105,10 +133,68 @@ check_command:
   cmp byte [cmd_buf+2], 109
   jne .not_found
   call run_llm_inference
-  ret
+  jmp .ret
 .not_found:
   mov esi, msg_unknown
   call print_str
+.ret:
+  ret
+
+cmd_clear:
+  mov ebx, 0xB8000
+  mov ecx, 80*25
+.clr_loop:
+  mov word [ebx], 0x0F20
+  add ebx, 2
+  loop .clr_loop
+  mov dword [cursor], 0xB8000
+  ret
+
+cmd_help:
+  mov esi, msg_help
+  call print_str
+  ret
+
+cmd_reboot:
+  mov al, 0xFE
+  out 0x64, al
+  ret
+
+cmd_time:
+  mov esi, msg_time_prefix
+  call print_str
+  mov al, 0x00
+  out 0x70, al
+  in al, 0x71
+  call print_bcd
+  mov al, 58
+  call print_char
+  mov al, 0x02
+  out 0x70, al
+  in al, 0x71
+  call print_bcd
+  mov al, 58
+  call print_char
+  mov al, 0x04
+  out 0x70, al
+  in al, 0x71
+  call print_bcd
+  mov al, 10
+  call print_char
+  ret
+
+print_bcd:
+  movzx ax, al
+  mov bl, al
+  and al, 0x0F
+  shr bl, 4
+  add bl, 48
+  mov cl, al
+  add cl, 48
+  mov al, bl
+  call print_char
+  mov al, cl
+  call print_char
   ret
 
 run_llm_inference:
@@ -207,15 +293,16 @@ isr_default:
   popa
   iret
 
-cursor: dd 0xB8000 + 160*1
+cursor: dd 0xB8000
 cmd_len: dd 0
 cmd_buf: times 64 db 0
-msg_boot db "My Super OS v0.4 - AI-Native Kernel [Type AI or LLM]", 10, 0
+msg_boot db "My Super OS v0.5 - AI-Native Kernel", 0
 prompt db 62, 32, 0
-msg_ai db "[AI Engine] Hello, Creator.", 10, 0
-msg_llm_start db "[LLM] Running matrix multiplication (4x1)...", 10, 0
+msg_help db "Commands: time, clear, help, reboot, llm", 10, 0
+msg_time_prefix db "Current Time [HH:MM:SS]: ", 0
+msg_llm_start db "[LLM] Running inference...", 10, 0
 msg_llm_res db "[LLM] Predicted token: ", 0
-msg_unknown db "Command not found. Available: ai, llm", 10, 0
+msg_unknown db "Unknown command. Type help.", 10, 0
 result_char db 0
 weights dd 1, 1, 1, 2
 input_vec dd 1, 1, 1, 1
