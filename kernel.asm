@@ -9,7 +9,7 @@ start:
   loop clr
   mov esi, msg_boot
   call print_str
-  ; Í  PIC vãd.ØO=
+  ; Í  PIC
   mov al, 0x11
   out 0x20, al
   out 0xA0, al
@@ -56,6 +56,9 @@ start:
 
 keyboard_handler:
   pusha
+  in al, 0x64
+  test al, 1
+  jz .done
   in al, 0x60
   test al, 0x80
   jnz .done
@@ -63,12 +66,40 @@ keyboard_handler:
   mov al, [keymap + ebx]
   test al, al
   jz .done
+  cmp al, 10
+  je .enter_key
+  mov ecx, [cmd_len]
+  mov [cmd_buf + ecx], al
+  inc dword [cmd_len]
   call print_char
-  .done:
+  jmp .done
+.enter_key:
+  call print_char
+  call check_command
+  mov dword [cmd_len], 0
+  mov esi, prompt
+  call print_str
+  jmp .done
+.done:
   mov al, 0x20
   out 0x20, al
   popa
   iret
+
+check_command:
+  mov ecx, [cmd_len]
+  mov byte [cmd_buf + ecx], 0
+  cmp byte [cmd_buf], 97
+  jne .not_ai
+  cmp byte [cmd_buf+1], 105
+  jne .not_ai
+  mov esi, msg_ai
+  call print_str
+  ret
+.not_ai:
+  mov esi, msg_unknown
+  call print_str
+  ret
 
 print_str:
   push ebx
@@ -105,11 +136,6 @@ print_char:
   mul ecx
   mov ebx, eax
   add ebx, 0xB8000
-  mov byte [ebx], 62
-  mov byte [ebx+1], 0x0A
-  mov byte [ebx+2], 32
-  mov byte [ebx+3], 0x0A
-  add ebx, 4
 .check_scroll:
   mov eax, ebx
   sub eax, 0xB8000
@@ -144,7 +170,12 @@ isr_default:
   iret
 
 cursor: dd 0xB8000 + 160*1
-msg_boot db "My Super OS v0.2 - Keyboard Shell Active!", 10, 62, 32, 0
+cmd_len: dd 0
+cmd_buf: times 64 db 0
+msg_boot db "My Super OS v0.3 - AI-Native Kernel [Type AI]", 10, 0
+prompt db 62, 32, 0
+msg_ai db "[AI Engine] Initializing local model... Memory OK. Hello, Creator.", 10, 0
+msg_unknown db "Command not found. Available: ai", 10, 0
 idt_descriptor: dw 256*8-1
 dd 0x200000
 keymap db 0,27,49,50,51,52,53,54,55,56,57,48,45,61,8,9,113,119,101,114,116,121,117,105,111,112,91,93,10,0,97,115,100,102,103,104,106,107,108,59,39,96,0,92,122,120,99,118,98,110,109,44,46,47,0,0,0,32,0
