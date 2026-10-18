@@ -74,6 +74,7 @@ keyboard_handler:
   call print_char
   jmp .done
 .enter_key:
+  mov al, 10
   call print_char
   call check_command
   mov dword [cmd_len], 0
@@ -90,31 +91,68 @@ check_command:
   mov ecx, [cmd_len]
   mov byte [cmd_buf + ecx], 0
   cmp byte [cmd_buf], 97
-  jne .not_ai
+  jne .check_llm
   cmp byte [cmd_buf+1], 105
-  jne .not_ai
+  jne .check_llm
   mov esi, msg_ai
   call print_str
   ret
-.not_ai:
+.check_llm:
+  cmp byte [cmd_buf], 108
+  jne .not_found
+  cmp byte [cmd_buf+1], 108
+  jne .not_found
+  cmp byte [cmd_buf+2], 109
+  jne .not_found
+  call run_llm_inference
+  ret
+.not_found:
   mov esi, msg_unknown
   call print_str
   ret
 
+run_llm_inference:
+  mov esi, msg_llm_start
+  call print_str
+  mov ecx, 4
+  mov edi, weights
+  mov esi, input_vec
+  xor ebx, ebx
+  xor edx, edx
+calc_loop:
+  mov eax, [esi]
+  imul eax, [edi]
+  add ebx, eax
+  add esi, 4
+  add edi, 4
+  inc edx
+  cmp edx, ecx
+  jl calc_loop
+  cmp ebx, 0
+  jge .relu_ok
+  xor ebx, ebx
+.relu_ok:
+  mov eax, ebx
+  add eax, 48
+  mov [result_char], al
+  mov esi, msg_llm_res
+  call print_str
+  mov al, [result_char]
+  call print_char
+  mov al, 10
+  call print_char
+  ret
+
 print_str:
-  push ebx
-  mov ebx, [cursor]
-  .loop:
+  pusha
+.loop_str:
   lodsb
   test al, al
-  jz .end
-  mov [ebx], al
-  mov byte [ebx+1], 0x0F
-  add ebx, 2
-  jmp .loop
-  .end:
-  mov [cursor], ebx
-  pop ebx
+  jz .end_str
+  call print_char
+  jmp .loop_str
+.end_str:
+  popa
   ret
 
 print_char:
@@ -172,10 +210,15 @@ isr_default:
 cursor: dd 0xB8000 + 160*1
 cmd_len: dd 0
 cmd_buf: times 64 db 0
-msg_boot db "My Super OS v0.3 - AI-Native Kernel [Type AI]", 10, 0
+msg_boot db "My Super OS v0.4 - AI-Native Kernel [Type AI or LLM]", 10, 0
 prompt db 62, 32, 0
-msg_ai db "[AI Engine] Initializing local model... Memory OK. Hello, Creator.", 10, 0
-msg_unknown db "Command not found. Available: ai", 10, 0
+msg_ai db "[AI Engine] Hello, Creator.", 10, 0
+msg_llm_start db "[LLM] Running matrix multiplication (4x1)...", 10, 0
+msg_llm_res db "[LLM] Predicted token: ", 0
+msg_unknown db "Command not found. Available: ai, llm", 10, 0
+result_char db 0
+weights dd 1, 1, 1, 2
+input_vec dd 1, 1, 1, 1
 idt_descriptor: dw 256*8-1
 dd 0x200000
 keymap db 0,27,49,50,51,52,53,54,55,56,57,48,45,61,8,9,113,119,101,114,116,121,117,105,111,112,91,93,10,0,97,115,100,102,103,104,106,107,108,59,39,96,0,92,122,120,99,118,98,110,109,44,46,47,0,0,0,32,0
