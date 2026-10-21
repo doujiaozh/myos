@@ -1,3 +1,8 @@
-*.bin 
-*.img 
-nasm-2.16.01/ 
+*.exe
+*.o
+*.bin
+*.img
+tcc/
+nasm.exe
+ndisasm.exe
+*.log
