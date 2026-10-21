@@ -1,0 +1,1 @@
+void main() { char* vga = (char*)0xB8000; for(int i=0; i<80*25; i++) { vga[i*2] = 32; vga[i*2+1] = 0x0F; } char* str = "  My Super OS Kernel v0.1 (C Language!)  "; int pos = 160*10; for(int i=0; str[i]; i++) { vga[pos + i*2] = str[i]; vga[pos + i*2 + 1] = 0x0A; } while(1); }
