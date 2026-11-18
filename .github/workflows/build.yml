@@ -1,13 +1,13 @@
-name: Build MyOS 
-on: [push] 
-jobs: 
-  build: 
-    runs-on: ubuntu-latest 
-    steps: 
-    - uses: actions/checkout@v3 
-    - name: Install nasm 
-      run: sudo apt-get install nasm 
-    - name: Build bootloader 
-      run: nasm -f bin boot.asm -o boot.bin 
-    - name: Verify Output 
-      run: ls -la boot.bin 
+name: Build MyOS
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install nasm
+      run: sudo apt-get update && sudo apt-get install -y nasm
+    - name: Build bootloader
+      run: nasm -f bin boot.asm -o boot.bin
+    - name: Verify Output
+      run: ls -la boot.bin
