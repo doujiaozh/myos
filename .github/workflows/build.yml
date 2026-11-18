@@ -8,6 +8,6 @@ jobs:
     - name: Install nasm 
       run: sudo apt-get install nasm 
     - name: Build bootloader 
-      run: nasm -f bin nasm-2.16.01/boot/bios/boot.asm -o boot.bin 
+      run: nasm -f bin boot.asm -o boot.bin 
     - name: Verify Output 
       run: ls -la boot.bin 
