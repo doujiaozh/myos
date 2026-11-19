@@ -11,12 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install NASM
-      run: sudo apt-get install -y nasm
+    - name: Install Dependencies
+      run: sudo apt-get update && sudo apt-get install -y nasm gcc
     - name: Compile Bootloader
       run: nasm -f bin boot.asm -o boot.bin
-    - name: Compile Kernel
-      run: nasm -f bin kernel.asm -o kernel.bin
+    - name: Compile Kernel ASM
+      run: nasm -f elf32 kernel.asm -o kernel_asm.o
+    - name: Compile Kernel C
+      run: gcc -m32 -ffreestanding -c kernel.c -o kernel_c.o
+    - name: Link Kernel
+      run: ld -m elf_i386 -Ttext 0x1000 kernel_asm.o kernel_c.o -o kernel.elf
+    - name: Convert to Binary
+      run: objcopy -O binary kernel.elf kernel.bin
     - name: Assemble Image
       run: |
         dd if=/dev/zero of=os.img bs=1M count=1
@@ -24,18 +30,3 @@ jobs:
         dd if=kernel.bin of=os.img bs=512 seek=1 conv=notrunc
     - name: Verify Image Size
       run: ls -l os.img
-
-  build-rust:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install Rust
-      run: rustup target add x86_64-unknown-none
-    - name: Build Rust Skeleton
-      run: |
-        if [ -d "rust-kernel" ]; then
-          cd rust-kernel
-          cargo build --target x86_64-unknown-none --release
-        else
-          echo "Rust skeleton not found, skipping..."
-        fi
