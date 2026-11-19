@@ -1,5 +1,5 @@
 [bits 32]
-[org 0x1000]
+
 
 global _start
 extern kmain
