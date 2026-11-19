@@ -2,13 +2,13 @@
 [org 0x1000]
 
 start:
-    ; ýýýýýý+ýýý£ý
+    ; ýýýýýý+ýýý£?
     mov edi, 0xA0000
     mov ecx, 64000
     xor al, al
     rep stosb
 
-    ; ýý¼ýý PIC ýý IDT
+    ; ýý¼ý?PIC ýý IDT
     mov al, 0x11
     out 0x20, al
     out 0xA0, al
@@ -41,7 +41,7 @@ init_idt:
     add edi, 8
     loop init_idt
 
-    ; âýýýýýý6ý
+    ; âýýýýý??
     mov eax, keyboard_handler
     mov word [0x200000 + 0x21*8], ax
     mov word [0x200000 + 0x21*8 + 2], 0x08
@@ -60,8 +60,8 @@ main_loop:
     mov cl, 0x00 ; ýýk
     call draw_square
 
-    ; ýýýpýýýýýýýýýýý
-    ; ýýýýýýýýý keyboard_handler ýýýýý
+    ; ýýýpýýýýýýýýýý?
+    ; ýýýýýýýý?keyboard_handler ýýýý?
 
     ; ýýýý»ýãýýýkýýýé
     mov eax, [pos_x]
@@ -69,7 +69,7 @@ main_loop:
     mov cl, 0x02 ; ýýk
     call draw_square
 
-    ; ýý±»ý£ýýý¹ýýø+ýý
+    ; ýý±»ý£ýýý¹ýý?ýý
     mov ecx, 0xFFFFFF
 .delay:
     dec ecx
@@ -81,37 +81,36 @@ main_loop:
 draw_square:
     pusha
     mov edx, 0xA0000
-    ; ýýýýýý«ýý y * 320
+    ; ýýýýýý«ý?y * 320
     mov esi, ebx
     imul esi, 320
     add edx, esi
-    ; ýýýýýý«ýý x
+    ; ýýýýýý«ý?x
     add edx, eax
 
     mov ch, 10 ; ýýýýöý 10
 .row:
     mov esi, edx
-    mov cl2 equ cl ; ýýýýýýkýýýý±ýýýý
-    mov edi, 10 ; ýýýýýýý 10
+    mov edi, 10 ; Ã¿ÐÐ 10 ÏñËØ
 .col:
     mov [esi], cl
     inc esi
     dec edi
     jnz .col
-    add edx, 320 ; ýý»ýý
+    add edx, 320 ; ýý»ý?
     dec ch
     jnz .row
     popa
     ret
 
-; ýýýýý6ôýýý
+; ýýýý?ôýýý
 keyboard_handler:
     pusha
     in al, 0x64
     test al, 1
     jz .done
     in al, 0x60
-    test al, 0x80 ; ýýý0ýýýýwý
+    test al, 0x80 ; ýý?ýýýýw?
     jnz .done
 
     ; W = 0x11, S = 0x1F, A = 0x1E, D = 0x20
