@@ -1,18 +1,9 @@
-name: Build OS Kernel
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-jobs:
   build-nasm:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Install Dependencies
-      run: sudo apt-get update && sudo apt-get install -y nasm gcc
+      run: sudo apt-get update && sudo apt-get install -y nasm gcc gcc-multilib
     - name: Compile Bootloader
       run: nasm -f bin boot.asm -o boot.bin
     - name: Compile Kernel ASM
@@ -28,5 +19,3 @@ jobs:
         dd if=/dev/zero of=os.img bs=1M count=1
         dd if=boot.bin of=os.img conv=notrunc
         dd if=kernel.bin of=os.img bs=512 seek=1 conv=notrunc
-    - name: Verify Image Size
-      run: ls -l os.img
