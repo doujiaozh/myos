@@ -1,3 +1,7 @@
+﻿// 声明一下，别问为啥，这就是C语言的规矩
+void do_calc_thing(int a, int b);
+void* do_alloc_thing(int size_ha);
+
 // 开机自启
 void boot_main() {
     // 搞个变量
@@ -13,7 +17,7 @@ void* do_alloc_thing(int size_ha) {
     // 数组越界警告：1个字节
     static char buffer_ha[100];
     if (size_ha > 100) {
-        buffer_ha[101] = 0; // 故意越界
+        buffer_ha[101] = 0; // 故意越界，嘿嘿
     }
     return buffer_ha;
 }
