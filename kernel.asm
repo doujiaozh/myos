@@ -6,20 +6,20 @@ extern keyboard_handler
 extern isr_default
 
 _start:
-    ; ÇåÆÁ (VGA Ä£Ê½ 13h µÄÏÔ´æ 0xA0000)
+    ; æ¸…å± (VGA æ¨¡å¼ 13h çš„æ˜¾å­˜ 0xA0000)
     mov edi, 0xA0000
     mov ecx, 64000
     xor al, al
     rep stosb
 
-    ; Ìø×ªµ½ C ÓïÑÔµÄÖ÷Èë¿Ú
+    ; è·³è½¬åˆ° C è¯­è¨€çš„ä¸»å…¥å£
     call kmain
 
 .hang:
     hlt
     jmp .hang
 
-; --- ¼üÅÌÖĞ¶Ï´¦Àí×® (Assembly Stub) ---
+; --- é”®ç›˜ä¸­æ–­å¤„ç†æ¡© (Assembly Stub) ---
 global isr_keyboard_stub
 isr_keyboard_stub:
     pusha
@@ -27,7 +27,7 @@ isr_keyboard_stub:
     popa
     iret
 
-; --- Ä¬ÈÏÖĞ¶Ï´¦Àí×® ---
+; --- é»˜è®¤ä¸­æ–­å¤„ç†æ¡© ---
 global isr_default_stub
 isr_default_stub:
     pusha
